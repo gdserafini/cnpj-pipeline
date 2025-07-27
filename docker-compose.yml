@@ -1,0 +1,24 @@
+services:
+  setup:
+    image: alpine
+    volumes:
+      - ./data:/data
+      - ./:/init
+    entrypoint: /bin/sh /init/setup.sh
+    networks:
+      - pipeline_network
+    restart: "no"
+
+  ingestion:
+    build:
+      context: ./src/ingestion
+    env_file:
+      - .env
+    networks:
+      - pipeline_network
+    volumes:
+      - ./data/bronze:/data/bronze
+
+networks:
+  pipeline_network:
+    driver: bridge
