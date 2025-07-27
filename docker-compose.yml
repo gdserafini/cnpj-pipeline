@@ -1,23 +1,29 @@
 services:
   setup:
-    image: alpine
+    image: pipeline:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "bash /app/setup.sh"
     volumes:
-      - ./data:/data
-      - ./:/init
-    entrypoint: /bin/sh /init/setup.sh
+      - ./data:/app/data
     networks:
       - pipeline_network
     restart: "no"
 
   ingestion:
-    build:
-      context: ./src/ingestion
+    image: pipeline:latest
+    depends_on:
+      - setup
+    command: >
+      python src/ingestion/ingest_cnpj.py
+    volumes:
+      - ./data:/app/data
     env_file:
       - .env
     networks:
       - pipeline_network
-    volumes:
-      - ./data/bronze:/data/bronze
 
 networks:
   pipeline_network:
