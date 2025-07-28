@@ -1,0 +1,28 @@
+services:
+  setup:
+    image: pipeline:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/app/data
+    networks:
+      - pipeline_network
+    restart: "no"
+
+  ingestion:
+    image: pipeline:latest
+    depends_on:
+      - setup
+    command: >
+      python src/ingestion/ingest_cnpj.py
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    networks:
+      - pipeline_network
+
+networks:
+  pipeline_network:
+    driver: bridge
