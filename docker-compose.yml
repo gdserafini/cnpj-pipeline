@@ -4,8 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: >
-      sh -c "bash /app/setup.sh"
     volumes:
       - ./data:/app/data
     networks:
