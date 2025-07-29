@@ -53,15 +53,15 @@ def save_bytes_data(data: bytes, path: str):
                 chunksize=DFT_CHUNK_SIZE
             )
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            for i, chunk in enumerate(reader):
-                mode = 'w' if i == 0 else 'a'
-                header = i == 0
+            iter_cout = 0
+            for chunk in reader:
                 chunk.to_csv(
-                    path, 
-                    mode=mode, 
-                    header=header, 
-                    index=False
+                    path,
+                    mode='w' if iter_cout == 0 else 'a',
+                    header=iter_cout == 0,
+                    index=false
                 )
+                iter_cout += 1
 
 
 total_start = time.time()
@@ -76,14 +76,12 @@ for enum in CnpjEnum:
             f'{base_dir_path}/bronze/{dft_year}/{dft_month_str}/{file_name}'
         )
         end = time.time()
-        logger.info(
-            f'{file_name} successfully saved - Time: {(end - start):.2f} seconds.'
-        )
+        timed = end - start
+        logger.info(f'{file_name} successfully saved - Time: {timed:.2f} seconds.')
     except Exception as e:
         logger.error(e)
 
 total_end = time.time()
+timedt = total_end - total_start
 logger.info('Ingestion successfully completed')
-logger.info(
-    f'CNPJ data ingestion total time: {(total_end - total_start):.2f} seconds.'
-)
+logger.info(f'CNPJ data ingestion total time: {timedt:.2f} seconds.')
