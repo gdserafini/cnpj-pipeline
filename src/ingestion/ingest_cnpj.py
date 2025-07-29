@@ -7,14 +7,15 @@ import sys
 import time
 from src.utils.logging import logger
 import pandas as pd
+from config.settings import Settings
 
 
-dft_year = int(os.getenv('DFT_YEAR'))
-dft_month = int(os.getenv('DFT_MONTH'))
-dft_month_str = os.getenv('DFT_MONTH_STR')
-base_dir_path = 'data'
-BASE_URL = 'https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj'
-DFT_CHUNK_SIZE = int(os.getenv('DFT_CHUNK_SIZE'))
+dft_year = Settings().DFT_YEAR
+dft_month = Settings().DFT_MONTH
+dft_month_str = Settings().DFT_MONTH_STR
+base_dir_path = Settings().BASE_DIR_PATH
+base_url = Settings().BASE_URL
+dft_chunk_size = Settings().DFT_CHUNK_SIZE
 
 
 class CnpjEnum(Enum):
@@ -31,7 +32,7 @@ class CnpjEnum(Enum):
 
 
 def build_url(data: CnpjEnum, year: int, month: int) -> str:
-    url = f'{BASE_URL}/{year}-{month:02d}/{data.value}.zip'
+    url = f'{base_url}/{year}-{month:02d}/{data.value}.zip'
     return url
 
 
@@ -50,7 +51,7 @@ def save_bytes_data(data: bytes, path: str):
                 sep=';', 
                 encoding='latin1', 
                 dtype=str, 
-                chunksize=DFT_CHUNK_SIZE
+                chunksize=dft_chunk_size
             )
             os.makedirs(os.path.dirname(path), exist_ok=True)
             iter_cout = 0
@@ -59,7 +60,7 @@ def save_bytes_data(data: bytes, path: str):
                     path,
                     mode='w' if iter_cout == 0 else 'a',
                     header=iter_cout == 0,
-                    index=false
+                    index=False
                 )
                 iter_cout += 1
 
