@@ -1,0 +1,180 @@
+{
+  "cnaes": {
+    "name": "",
+    "columns": ["codigo", "descricao"],
+    "cast_types": [
+      ["codigo", "string"],
+      ["descricao", "string"]
+    ]
+  },
+  "municipios": {
+    "name": "",
+    "columns": ["codigo", "descricao"],
+    "cast_types": [
+      ["codigo", "string"],
+      ["descricao", "string"]
+    ]
+  },
+  "naturezas_juridicas": {
+    "name": "",
+    "columns": ["codigo", "descricao"],
+    "cast_types": [
+      ["codigo", "string"],
+      ["descricao", "string"]
+    ]
+  },
+  "qualificacoes_de_socios": {
+    "name": "",
+    "columns": ["codigo", "descricao"],
+    "cast_types": [
+      ["codigo", "string"],
+      ["descricao", "string"]
+    ]
+  },
+  "paises": {
+    "name": "",
+    "columns": ["codigo", "descricao"],
+    "cast_types": [
+      ["codigo", "string"],
+      ["descricao", "string"]
+    ]
+  },
+  "dados_do_simples": {
+    "name": "",
+    "columns": [
+      "cnpj_basico",
+      "opcao_pelo_simples",
+      "data_de_opcao_pelo_simples",
+      "data_de_exclusao_do_simples",
+      "opcao_pelo_mei",
+      "data_de_opcao_pelo_mei",
+      "data_de_exclusao_do_mei"
+    ],
+    "cast_types": [
+      ["cnpj_basico", "string"],
+      ["opcao_pelo_simples", "string"],
+      ["data_de_opcao_pelo_simples", "timestamp"],
+      ["data_de_exclusao_do_simples", "timestamp"],
+      ["opcao_pelo_mei", "string"],
+      ["data_de_opcao_pelo_mei", "timestamp"],
+      ["data_de_exclusao_do_mei", "timestamp"]
+    ]
+  },
+  "empresas": {
+    "name": "",
+    "columns": [
+      "cnpj_basico",
+      "razao_social",
+      "natureza_juridica",
+      "qualificacao_do_responsavel",
+      "capital_social_da_empresa",
+      "porte_da_empresa",
+      "ente_federativo_responsavel"
+    ],
+    "cast_types": [
+      ["cnpj_basico", "string"],
+      ["razao_social", "string"],
+      ["natureza_juridica", "string"],
+      ["qualificacao_do_responsavel", "string"],
+      ["capital_social_da_empresa", "double"],
+      ["porte_da_empresa", "string"],
+      ["ente_federativo_responsavel", "string"]
+    ]
+  },
+  "estabelecimentos": {
+    "name": "",
+    "columns": [
+      "cnpj_basico",
+      "cnpj_ordem",
+      "cnpj_dv",
+      "identificador_matriz_filial",
+      "nome_fantasia",
+      "situacao_cadastral",
+      "data_situacao_cadastral",
+      "motivo_situacao_cadastral",
+      "nome_da_cidade_no_exterior",
+      "pais",
+      "data_inicio_atividade",
+      "cnae_fiscal_principal",
+      "cnae_fiscal_secundario",
+      "tipo_de_logradouro",
+      "logradouro",
+      "numero",
+      "complemento",
+      "bairro",
+      "cep",
+      "uf",
+      "municipio",
+      "ddd_1",
+      "telefone_1",
+      "ddd_2",
+      "telefone_2",
+      "ddd_do_fax",
+      "fax",
+      "correio_eletronico",
+      "situacao_especial",
+      "data_da_situacao_especial"
+    ],
+    "cast_types": [
+      ["cnpj_basico", "string"],
+      ["cnpj_ordem", "string"],
+      ["cnpj_dv", "string"],
+      ["identificador_matriz_filial", "string"],
+      ["nome_fantasia", "string"],
+      ["situacao_cadastral", "string"],
+      ["data_situacao_cadastral", "timestamp"],
+      ["motivo_situacao_cadastral", "string"],
+      ["nome_da_cidade_no_exterior", "string"],
+      ["pais", "string"],
+      ["data_inicio_atividade", "timestamp"],
+      ["cnae_fiscal_principal", "string"],
+      ["cnae_fiscal_secundario", "string"],
+      ["tipo_de_logradouro", "string"],
+      ["logradouro", "string"],
+      ["numero", "string"],
+      ["complemento", "string"],
+      ["bairro", "string"],
+      ["cep", "string"],
+      ["uf", "string"],
+      ["municipio", "string"],
+      ["ddd_1", "string"],
+      ["telefone_1", "string"],
+      ["ddd_2", "string"],
+      ["telefone_2", "string"],
+      ["ddd_do_fax", "string"],
+      ["fax", "string"],
+      ["correio_eletronico", "string"],
+      ["situacao_especial", "string"],
+      ["data_da_situacao_especial", "timestamp"]
+    ]
+  },
+  "socios": {
+    "name": "",
+    "columns": [
+      "cnpj_basico",
+      "identificador_socio",
+      "nome_do_socio",
+      "cpf_cnpj_do_socio",
+      "qualificacao_do_socio",
+      "data_de_entrada_sociedade",
+      "pais",
+      "representante_legal",
+      "nome_do_representante",
+      "qualificacao_do_representante_legal",
+      "faixa_etaria"
+    ],
+    "cast_types": [
+      ["cnpj_basico", "string"],
+      ["identificador_socio", "string"],
+      ["nome_do_socio", "string"],
+      ["cpf_cnpj_do_socio", "string"],
+      ["qualificacao_do_socio", "string"],
+      ["data_de_entrada_sociedade", "timestamp"],
+      ["pais", "string"],
+      ["representante_legal", "string"],
+      ["nome_do_representante", "string"],
+      ["qualificacao_do_representante_legal", "string"],
+      ["faixa_etaria", "string"]
+    ]
+  }
+}
