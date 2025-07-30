@@ -35,6 +35,19 @@ services:
       - .env
     networks:
       - pipeline_network
+    
+  processing_gold:
+    image: pipeline:latest
+    depends_on:
+      - processing_silver
+    command: >
+      python src/processing/processing_gold.py
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    networks:
+      - pipeline_network
 
 networks:
   pipeline_network:
