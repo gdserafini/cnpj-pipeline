@@ -23,6 +23,19 @@ services:
     networks:
       - pipeline_network
 
+  processing_silver:
+    image: pipeline:latest
+    depends_on:
+      - ingestion
+    command: >
+      python src/processing/processing_silver.py
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    networks:
+      - pipeline_network
+
 networks:
   pipeline_network:
     driver: bridge
