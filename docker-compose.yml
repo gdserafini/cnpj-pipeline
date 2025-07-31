@@ -10,37 +10,13 @@ services:
       - pipeline_network
     restart: "no"
 
-  ingestion:
+  etl:
     image: pipeline:latest
     depends_on:
       - setup
     command: >
-      python src/ingestion/ingest_cnpj.py
-    volumes:
-      - ./data:/app/data
-    env_file:
-      - .env
-    networks:
-      - pipeline_network
-
-  processing_silver:
-    image: pipeline:latest
-    depends_on:
-      - ingestion
-    command: >
-      python src/processing/processing_silver.py
-    volumes:
-      - ./data:/app/data
-    env_file:
-      - .env
-    networks:
-      - pipeline_network
-    
-  processing_gold:
-    image: pipeline:latest
-    depends_on:
-      - processing_silver
-    command: >
+      python src/ingestion/ingest_cnpj.py && \
+      python src/processing/processing_silver.py && \
       python src/processing/processing_gold.py
     volumes:
       - ./data:/app/data
