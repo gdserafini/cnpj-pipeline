@@ -1,5 +1,6 @@
 data
 .venv
+.venv-jupyter
 .env
 __pycache__
 spark-warehouse

@@ -13,3 +13,4 @@ class Settings(BaseSettings):
     DFT_CHUNK_SIZE: int
     BASE_URL: str
     BASE_DIR_PATH: str
+    DFT_DWLD_CHUNK_SIZE: int
