@@ -24,15 +24,6 @@ dft_chunk_size = Settings().DFT_CHUNK_SIZE
 dft_dwld_chunk_size = Settings().DFT_DWLD_CHUNK_SIZE
 
 
-spark = (
-    SparkSession
-        .builder
-        .master('local[*]')
-        .appName('Ingestion')
-        .getOrCreate()
-)
-
-
 class CnpjEnum(Enum):
     CNAES = 'Cnaes'
     PAISES = 'Paises'

@@ -15,7 +15,10 @@ services:
     depends_on:
       - setup
     command: >
-      python src/ingestion/ingest_cnpj.py
+      sh -c "
+      python src/ingestion/ingest_cnpj.py && \
+      python src/processing/silver_processing.py
+      "
     volumes:
       - ./data:/app/data
     env_file:
