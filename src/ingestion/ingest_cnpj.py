@@ -1,4 +1,3 @@
-from enum import Enum
 import requests as req
 import zipfile
 import io
@@ -7,38 +6,24 @@ import time
 from src.utils.logging import logger
 import pandas as pd
 from config.settings import Settings
-from pyspark.sql import SparkSession
 import pyarrow as pa
 import pyarrow.parquet as pq
 import gc
 import uuid
 from typing import Any
+import json
 
 
-dft_year = Settings().DFT_YEAR
-dft_month = Settings().DFT_MONTH
-dft_month_str = Settings().DFT_MONTH_STR
-base_dir_path = Settings().BASE_DIR_PATH
-base_url = Settings().BASE_URL
-dft_chunk_size = Settings().DFT_CHUNK_SIZE
-dft_dwld_chunk_size = Settings().DFT_DWLD_CHUNK_SIZE
+TYPE_MAP = {
+    "string": pa.string(),
+    "int": pa.int32(),
+    "double": pa.float64(),
+    "timestamp": pa.date32()
+}
 
 
-class CnpjEnum(Enum):
-    CNAES = 'Cnaes'
-    PAISES = 'Paises'
-    SIMPLES = 'Simples'
-    EMPRESAS = 'Empresas0'
-    ESTABELECIMENTOS = 'Estabelecimentos0'
-    MOTIVOS = 'Motivos'
-    MUNICIPIOS = 'Municipios'
-    NATUREZAS = 'Naturezas'
-    QUALIFICACOES = 'Qualificacoes'
-    SOCIOS = 'Socios0'
-
-
-def build_url(data: CnpjEnum, year: int, month: int) -> str:
-    url = f'{base_url}/{year}-{month:02d}/{data.value}.zip'
+def build_url(file_name: str, year: int, month: int) -> str:
+    url = f'{Settings().BASE_URL}/{year}-{month:02d}/{file_name}.zip'
     return url
 
 
@@ -47,11 +32,13 @@ def fetch_data_stream(
     output_path: str
 ) -> None:
     create_dir(os.path.dirname(output_path))
+
     with req.get(source_url, stream=True) as r:
         r.raise_for_status()
+
         with open(output_path, 'wb') as f:
             for chunk in r.iter_content(
-                chunk_size=dft_dwld_chunk_size
+                chunk_size=Settings().DFT_DWLD_CHUNK_SIZE
             ):
                 f.write(chunk)
 
@@ -59,14 +46,15 @@ def fetch_data_stream(
 def create_dir(path: str) -> None:
     if path is None or path.strip() == '':
         raise Exception('Invalid path')
+    
     os.makedirs(path, exist_ok=True)
 
 
 def get_partition_path(output_path: str) -> str:
     partition_path = os.path.join(
         output_path.rstrip('/'),
-        f'year={dft_year}',
-        f'month={dft_month:02d}'
+        f'year={Settings().DFT_YEAR}',
+        f'month={Settings().DFT_MONTH:02d}'
     )
     return partition_path
 
@@ -79,18 +67,32 @@ def create_partition(output_path: str) -> None:
 
 def data_already_exists(output_path: str) -> bool:
     partition_path = get_partition_path(output_path)
+
     if not os.path.exists(partition_path):
         return False
+    
     return (
         any(fname.endswith('.parquet'))
         for fname in os.listdir(partition_path)
     )
 
 
+def get_schema(types: list[list]) -> Any:
+    schema = pa.schema(
+        [
+            (col, TYPE_MAP[dtype])
+            for col, dtype in types
+        ]
+    )
+    return schema
+
+
 def save_data(
     zip_path: str = '',
     data: bytes = None, 
-    output_path: str = ''
+    output_path: str = '',
+    columns: list[str] = None,
+    types: list[list] = None
 ) -> None:
     partition_path = get_partition_path(output_path)
     create_partition(output_path)
@@ -104,27 +106,43 @@ def save_data(
                 csv_file, 
                 sep=';', 
                 encoding='latin1', 
-                chunksize=dft_chunk_size,
-                dtype=str
+                chunksize=Settings().DFT_CHUNK_SIZE,
+                dtype=str,
+                header=None,
+                names=columns
             ):
-                chunk = (
-                    chunk
-                        .fillna("")
-                        .astype(str)
-                        .apply(lambda x: x.str.strip())
-                )
+                chunk = chunk.replace('', pd.NA).fillna(pd.NA)
+                for col, dtype in types:
+                    if dtype == 'timestamp':
+                        chunk[col] = (
+                            pd
+                                .to_datetime(
+                                    chunk[col], 
+                                    format="%Y%m%d", 
+                                    errors="coerce")
+                                .dt
+                                .date
+                        )
+                    if dtype == 'double':
+                        chunk[col] = chunk[col].str.replace(',', '.')
                 table = pa.Table.from_pandas(
                     chunk, 
                     preserve_index=False
                 )
+
                 del chunk
                 gc.collect()
+
+                schema = get_schema(types)
+                table = table.cast(schema)
+
                 file_name = f'chunk_{uuid.uuid4().hex}.parquet'
                 pq.write_table(
                     table,
                     os.path.join(partition_path, file_name),
                     compression='snappy'
                 )
+
                 del table
                 gc.collect()
         
@@ -132,30 +150,42 @@ def save_data(
 def main() -> int:
     total_start = time.time()
 
-    for enum in CnpjEnum:
+    logger.info('Starting ingestion service.')
+
+    with open('./src/ingestion/modelling.json') as jf:
+        dfs = json.load(jf)
+
+    for attr in dfs.values():
         try:
             start = time.time()
 
-            output_path = f'{base_dir_path}/bronze/{enum.value}/'
+            file_name = attr['name']
+            output_path = f'{Settings().BASE_DIR_PATH}/{file_name}/'
             
             if data_already_exists(output_path):
-                logger.info(f'[INFO] - {enum.value} already exists - Skipping')
+                logger.info(f'{file_name} already exists - Skipping')
                 continue
 
-            url = build_url(enum, dft_year, dft_month)
+            url = build_url(
+                file_name, 
+                Settings().DFT_YEAR, 
+                Settings().DFT_MONTH
+            )
+            zip_path = f'{Settings().BASE_DIR_PATH}/tmp/{uuid.uuid4().hex}.zip'
 
-            zip_path = f'{base_dir_path}/tmp/{uuid.uuid4().hex}.zip'
             fetch_data_stream(url, zip_path)
             save_data(
                 zip_path=zip_path, 
-                output_path=f'{base_dir_path}/bronze/{enum.value}/'
+                output_path=output_path,
+                columns=attr['columns'],
+                types=attr['cast_types']
             )
 
             os.remove(zip_path)
 
             end = time.time()
             timed = end - start
-            logger.info(f'{enum.value} successfully saved - Time: {timed:.2f} seconds.')
+            logger.info(f'{file_name} successfully saved - {timed:.2f} seconds.')
 
         except Exception as e:
             logger.error(e)
@@ -163,8 +193,7 @@ def main() -> int:
     total_end = time.time()
     timedt = total_end - total_start
 
-    logger.info('Ingestion successfully completed')
-    logger.info(f'CNPJ data ingestion total time: {timedt:.2f} seconds.')
+    logger.info(f'Ingestion successfully completed - {timedt:.2f} seconds.')
 
 
 if __name__ == '__main__':
