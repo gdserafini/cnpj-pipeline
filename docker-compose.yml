@@ -10,14 +10,13 @@ services:
       - pipeline_network
     restart: "no"
 
-  etl:
+  elt:
     image: pipeline:latest
     depends_on:
       - setup
     command: >
       sh -c "
-      python src/ingestion/ingest_cnpj.py && \
-      python src/processing/silver_processing.py
+      python src/ingestion/ingest_cnpj.py
       "
     volumes:
       - ./data:/app/data
