@@ -16,7 +16,8 @@ services:
       - setup
     command: >
       sh -c "
-      python src/ingestion/ingest_cnpj.py
+      python src/ingestion/ingest_cnpj.py &&
+      python src/api/app.py
       "
     volumes:
       - ./data:/app/data
@@ -24,6 +25,8 @@ services:
       - .env
     networks:
       - pipeline_network
+    ports: 
+      - "5000:5000"
 
 networks:
   pipeline_network:
