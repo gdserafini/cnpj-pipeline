@@ -1,18 +1,10 @@
-from flask import Flask, request
-from typing import Any
-from src.queries.database import load_query, conn
+from flask import Flask
+from src.api.cnpj_api import cnpj_bp
 
 
 app = Flask(__name__)
 
-
-@app.route('/cnaes', methods=['GET'])
-def read_cnaes() -> Any:
-    year = request.args.get('year', type=int)
-    month = request.args.get('month', type=int)
-    query = load_query('get_cnaes.sql')
-    result = conn.execute(query, [year, month]).fetchdf()
-    return result.to_json(orient='records', force_ascii=False)
+app.register_blueprint(cnpj_bp)
 
 
 if __name__ == "__main__":
