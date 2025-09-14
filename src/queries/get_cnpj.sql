@@ -49,7 +49,8 @@ SELECT
     em.porte,
     em.descricao,
     em.opcao_pelo_simples,
-    em.opcao_pelo_mei
+    em.opcao_pelo_mei,
+    em.empresa_num AS num
 FROM estabelecimentos AS es
 LEFT JOIN read_parquet('/app/data/Municipios/**/*.parquet') AS mu
     ON mu.codigo = es.municipio
