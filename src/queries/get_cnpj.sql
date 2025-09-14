@@ -1,10 +1,22 @@
 --TODO
---review data modelling/normalization
---subqueries for join with empresas and partners (and subjoins)
---review cte/with
---window functions + partition by
 --optmization
---acid and transaction management
+
+WITH
+    empresas AS (
+        SELECT 
+            em.cnpj_basico,
+            em.razao_social,
+            em.porte_da_empresa,
+            na.descricao,
+            si.opcao_pelo_simples,
+            si.opcao_pelo_mei,
+            ROW_NUMBER() OVER(PARTITION BY cnpj_basico) AS empresa_num
+        FROM read_parquet('/app/data/Empresas0/**/*.parquet') AS em
+        LEFT JOIN read_parquet('/app/data/Simples/**/*.parquet') AS si
+            ON em.cnpj_basico = si.cnpj_basico
+        LEFT JOIN read_parquet('/app/data/Naturezas/**/*.parquet') AS na
+            ON na.codigo = em.natureza_juridica
+    )
 
 SELECT 
     CONCAT(es.cnpj_basico, cnpj_ordem, cnpj_dv) AS cnpj,
@@ -28,4 +40,9 @@ LEFT JOIN read_parquet('/app/data/Municipios/**/*.parquet') AS mu
     ON mu.codigo = es.municipio
 LEFT JOIN read_parquet('/app/data/Cnaes/**/*.parquet') AS cn
     ON cn.codigo = es.cnae_fiscal_principal
-WHERE es.year = ? AND es.month = ? AND es.cnpj_basico = ?;
+LEFT JOIN empresas AS em
+    ON em.cnpj_basico = es.cnpj_basico 
+WHERE 
+    es.year = ? 
+    AND es.month = ? 
+    AND es.cnpj_basico = ?;
