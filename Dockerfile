@@ -10,8 +10,6 @@ RUN apt-get update && \
 
 RUN pip install --upgrade pip setuptools wheel
 
-RUN pip install duckdb flask
-
 COPY requirements.txt .
 
 RUN pip install -r requirements.txt
