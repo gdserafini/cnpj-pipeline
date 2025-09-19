@@ -27,13 +27,4 @@ with DAG(
             ]
         )
 
-    @task
-    def run_api(task_id='api'):
-        _run_process(
-            [
-                'python', 
-                '/app/src/ingestion/ingest_cnpj.py'
-            ]
-        )
-
-    ingest_cnpj() >> run_api()
+    ingest_cnpj()
