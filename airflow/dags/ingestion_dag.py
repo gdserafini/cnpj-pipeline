@@ -23,7 +23,7 @@ with DAG(
         _run_process(
             [
                 'python', 
-                '/app/src/ingestion/ingest_cnpj.py'
+                '/opt/airflow/src/ingestion/ingest_cnpj.py'
             ]
         )
 
