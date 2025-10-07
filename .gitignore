@@ -4,3 +4,8 @@ data
 .env
 __pycache__
 spark-warehouse
+airflow/logs
+airflow/db_data
+airflow/config
+airflow/plugins
+app_logs

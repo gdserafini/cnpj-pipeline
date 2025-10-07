@@ -3,7 +3,6 @@ from src.api.cnpj_api import cnpj_bp
 
 
 app = Flask(__name__)
-
 app.register_blueprint(cnpj_bp)
 
 
