@@ -3,15 +3,17 @@ import zipfile
 import io
 import os
 import time
+from datetime import date
 from src.utils.logging import logger
 import pandas as pd
-from config.settings import Settings
+from app_config.settings import Settings
 import pyarrow as pa
 import pyarrow.parquet as pq
 import gc
 import uuid
 from typing import Any
 import json
+import os
 
 
 TYPE_MAP = {
@@ -50,23 +52,29 @@ def create_dir(path: str) -> None:
     os.makedirs(path, exist_ok=True)
 
 
-def get_partition_path(output_path: str) -> str:
+def get_partition_path(
+    output_path: str, year: int, month: int
+) -> str:
     partition_path = os.path.join(
         output_path.rstrip('/'),
-        f'year={Settings().DFT_YEAR}',
-        f'month={Settings().DFT_MONTH:02d}'
+        f'year={year}',
+        f'month={month}'
     )
     return partition_path
 
 
-def create_partition(output_path: str) -> None:
+def create_partition(
+    output_path: str, year: int, month: int
+) -> None:
     os.makedirs(output_path.rstrip('/'), exist_ok=True)
-    partition_path = get_partition_path(output_path)
+    partition_path = get_partition_path(output_path, year, month)
     os.makedirs(partition_path, exist_ok=True)
 
 
-def data_already_exists(output_path: str) -> bool:
-    partition_path = get_partition_path(output_path)
+def data_already_exists(
+    output_path: str, year: int, month: int
+) -> bool:
+    partition_path = get_partition_path(output_path, year, month)
 
     if not os.path.exists(partition_path):
         return False
@@ -92,10 +100,12 @@ def save_data(
     data: bytes = None, 
     output_path: str = '',
     columns: list[str] = None,
-    types: list[list] = None
+    types: list[list] = None,
+    year: int = 0,
+    month: int = 0
 ) -> None:
-    partition_path = get_partition_path(output_path)
-    create_partition(output_path)
+    partition_path = get_partition_path(output_path, year, month)
+    create_partition(output_path, year, month)
 
     data_to_read: Any = zip_path if zip_path else io.BytesIO(data)
     
@@ -147,30 +157,43 @@ def save_data(
                 gc.collect()
         
 
+def _get_current_year_month() -> tuple[int, int]:
+    today_date = date.today()
+    year = today_date.year
+    month = today_date.month
+    return year, month
+
+
+BDIR = os.path.dirname(os.path.abspath(__file__))
+
+
 def main() -> int:
+    year, month = _get_current_year_month()
+
     total_start = time.time()
 
     logger.info('Starting ingestion service.')
 
-    with open('./src/ingestion/modelling.json') as jf:
+    with open(os.path.join(BDIR, 'modelling.json')) as jf:
         dfs = json.load(jf)
-
+    
     for attr in dfs.values():
         try:
+            logger.info(f'attr: {attr}')
+            
             start = time.time()
 
             file_name = attr['name']
+            logger.info(f'file_name: {file_name}')
+
             output_path = f'{Settings().BASE_DIR_PATH}/{file_name}/'
+            logger.info(f'output path: {output_path}')
             
-            if data_already_exists(output_path):
+            if data_already_exists(output_path, year, month):
                 logger.info(f'{file_name} already exists - Skipping')
                 continue
 
-            url = build_url(
-                file_name, 
-                Settings().DFT_YEAR, 
-                Settings().DFT_MONTH
-            )
+            url = build_url(file_name, year, month)
             zip_path = f'{Settings().BASE_DIR_PATH}/tmp/{uuid.uuid4().hex}.zip'
 
             fetch_data_stream(url, zip_path)
@@ -178,7 +201,9 @@ def main() -> int:
                 zip_path=zip_path, 
                 output_path=output_path,
                 columns=attr['columns'],
-                types=attr['cast_types']
+                types=attr['cast_types'],
+                year=year,
+                month=month
             )
 
             os.remove(zip_path)

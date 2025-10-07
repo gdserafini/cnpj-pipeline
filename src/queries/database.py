@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any
 
 
-conn = duckdb.connect('/app/data/cnpj.duckdb')
+conn = duckdb.connect('/opt/airflow/data/cnpj.duckdb')
 
 
 def run(

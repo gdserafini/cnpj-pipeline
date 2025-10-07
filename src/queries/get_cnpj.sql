@@ -1,9 +1,9 @@
-SET threads = 2;
+SET threads = 6;
 SET preserve_insertion_order = false;
-SET temp_directory = '/app/data/temp_duckdb_disk.tmp/';
+SET temp_directory = '/opt/airflow/data/temp_duckdb_disk.tmp/';
 
 CREATE OR REPLACE TEMP VIEW estabelecimentos AS
-SELECT * FROM read_parquet('/app/data/Estabelecimentos0/**/*.parquet');
+SELECT * FROM read_parquet('/opt/airflow/data/Estabelecimentos0/**/*.parquet');
 
 WITH
     empresas AS (
@@ -20,10 +20,10 @@ WITH
             si.opcao_pelo_simples,
             si.opcao_pelo_mei,
             ROW_NUMBER() OVER(PARTITION BY em.cnpj_basico) AS empresa_num
-        FROM read_parquet('/app/data/Empresas0/**/*.parquet') AS em
-        LEFT JOIN read_parquet('/app/data/Simples/**/*.parquet') AS si
+        FROM read_parquet('/opt/airflow/data/Empresas0/**/*.parquet') AS em
+        LEFT JOIN read_parquet('/opt/airflow/data/Simples/**/*.parquet') AS si
             ON em.cnpj_basico = si.cnpj_basico
-        LEFT JOIN read_parquet('/app/data/Naturezas/**/*.parquet') AS na
+        LEFT JOIN read_parquet('/opt/airflow/data/Naturezas/**/*.parquet') AS na
             ON na.codigo = em.natureza_juridica
     )
 
@@ -52,9 +52,9 @@ SELECT
     em.opcao_pelo_mei,
     em.empresa_num AS num
 FROM estabelecimentos AS es
-LEFT JOIN read_parquet('/app/data/Municipios/**/*.parquet') AS mu
+LEFT JOIN read_parquet('/opt/airflow/data/Municipios/**/*.parquet') AS mu
     ON mu.codigo = es.municipio
-LEFT JOIN read_parquet('/app/data/Cnaes/**/*.parquet') AS cn
+LEFT JOIN read_parquet('/opt/airflow/data/Cnaes/**/*.parquet') AS cn
     ON cn.codigo = es.cnae_fiscal_principal
 LEFT JOIN empresas AS em
     ON em.base_cnpj = es.cnpj_basico
