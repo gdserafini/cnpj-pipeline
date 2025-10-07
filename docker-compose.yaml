@@ -49,8 +49,8 @@ x-airflow-common:
   # In order to add custom dependencies or upgrade provider distributions you can use your extended image.
   # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
   # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
-  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:3.0.6}
-  # build: .
+  # image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:3.0.6}
+  build: .
   environment:
     &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
@@ -78,6 +78,9 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/airflow/plugins:/opt/airflow/plugins
     - ${AIRFLOW_PROJ_DIR:-.}/data:/opt/airflow/data
+    - ${AIRFLOW_PROJ_DIR:-.}/src:/opt/airflow/src
+    - ${AIRFLOW_PROJ_DIR:-.}/app_config:/opt/airflow/app_config
+    - ${AIRFLOW_PROJ_DIR:-.}/app_logs:/opt/airflow/app_logs
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -340,9 +343,10 @@ services:
     depends_on:
       airflow-init:
         condition: service_completed_successfully
-    command: python src/api/app.py
+    user: "${AIRFLOW_UID:-50000}:0"
+    command: python /opt/airflow/src/api/app.py
     volumes:
-      - ./data:/app/data
+      - ./data:/opt/airflow/data
     env_file:
       - .env
     ports:
