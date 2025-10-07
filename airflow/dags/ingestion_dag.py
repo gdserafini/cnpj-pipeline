@@ -14,7 +14,7 @@ def _run_process(command: list[str]) -> None:
 
 with DAG(
     dag_id='cnpj_ingestion_dag',
-    schedule='@monthly',
+    schedule_interval='@monthly',
     start_date=datetime(2025, 10, 1),
     catchup=False
 ): 
@@ -22,8 +22,7 @@ with DAG(
     def ingest_cnpj():
         _run_process(
             [
-                'python', 
-                '/opt/airflow/src/ingestion/ingest_cnpj.py'
+                'python', '-m', 'src.ingestion.ingest_cnpj'
             ]
         )
 
