@@ -3,20 +3,7 @@ from datetime import datetime, date
 from airflow.sdk import task
 import subprocess
 import requests
-
-
-def _run_process(command: list[str]) -> None:
-    result = subprocess.run(
-        command, 
-        capture_output=True, 
-        text=True
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f'Process error - {result.stderr}')
-
-
-def _check_zip(year: int, month: int) -> bool:
-    ...
+from app_config.settings import Settings
 
 
 def _create_ingestion_dag(
@@ -27,26 +14,37 @@ def _create_ingestion_dag(
     year: int,
     month: int
 ) -> DAG:
+    start_date = start_date if start_date else datetime.now()
+    
     with DAG(
         dag_id=dag_id,
         schedule=schedule,
-        start_date=start_date if start_date else datetime.now(),
+        start_date=start_date,
         catchup=catchup,
         tags=["cnpj", "ingestion"]  
     ) as dag:
         @task(task_id=f'check_zip_{dag_id}')
         def check_zip():
-            if not _check_zip(year, month):
-                raise Exception('CNPJ zip file not avaliable')
+            try:
+                url = f'{Settings().BASE_URL}/{year}-{month:.2d}'
+                response = requests.head(url)
+                if response.status_code != 200:
+                    raise FileNotFoundError('CNPJ zip file not avaliable')
+            except requests.RequestException as e:
+                raise e
 
         @task(task_id=f'ingestion_process_{dag_id}')
         def ingest_cnpj():
-            _run_process(
+            result = subprocess.run(
                 [
                     'python', '-m', 'src.ingestion.ingest_cnpj',
                     '-y', str(year), '-m', str(month)
-                ]
+                ], 
+                capture_output=True, 
+                text=True
             )
+            if result.returncode != 0:
+                raise RuntimeError(f'Process error - {result.stderr}')
 
         check_zip() >> ingest_cnpj() 
     
@@ -61,7 +59,7 @@ ingestion_dag_once = _create_ingestion_dag(
     dag_id='once',
     schedule='@once',
     start_date=None,
-    catchup=False,
+    catchup=True,
     year=year,
     month=month   
 )
@@ -75,5 +73,5 @@ ingestion_dag_monthly = _create_ingestion_dag(
     start_date=datetime(year, next_month, 1),
     catchup=False,
     year=year,
-    month=month   
+    month=next_month
 )
