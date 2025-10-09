@@ -14,6 +14,7 @@ import uuid
 from typing import Any
 import json
 import os
+import argparse
 
 
 TYPE_MAP = {
@@ -155,21 +156,12 @@ def save_data(
 
                 del table
                 gc.collect()
-        
-
-def _get_current_year_month() -> tuple[int, int]:
-    today_date = date.today()
-    year = today_date.year
-    month = today_date.month
-    return year, month
 
 
 BDIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def main() -> int:
-    year, month = _get_current_year_month()
-
+def main(year: int, month: int) -> int:
     total_start = time.time()
 
     logger.info('Starting ingestion service.')
@@ -222,4 +214,14 @@ def main() -> int:
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-y', '--year')
+    parser.add_argument('-m', '--month')
+    args = parser.parse_args()
+    
+    year = args.y | args.year
+    month = args.m | args.month
+
+    main(year, month)
+    
+    
