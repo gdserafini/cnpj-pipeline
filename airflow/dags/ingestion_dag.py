@@ -1,21 +1,20 @@
 from airflow import DAG
-from datetime import datetime, date
+from datetime import datetime
 from airflow.sdk import task
 import subprocess
 import requests
 from app_config.settings import Settings
+import calendar
 
 
 def _create_ingestion_dag(
     dag_id: str,
     schedule: str,
-    start_date: datetime | None,
+    start_date: datetime,
     catchup: bool,
     year: int,
     month: int
 ) -> DAG:
-    start_date = start_date if start_date else datetime.now()
-    
     with DAG(
         dag_id=dag_id,
         schedule=schedule,
@@ -51,14 +50,17 @@ def _create_ingestion_dag(
         return dag
 
 
-today_date = date.today()
-year = today_date.year
-month = today_date.month
+now = datetime.now()
+year = now.year
+month = now.month
+day = now.day
+hour = now.hour
+minute = now.minute
 
 ingestion_dag_once = _create_ingestion_dag(
     dag_id='once',
     schedule='@once',
-    start_date=None,
+    start_date=datetime(year, month, day, hour, minute+5),
     catchup=True,
     year=year,
     month=month   
@@ -66,11 +68,12 @@ ingestion_dag_once = _create_ingestion_dag(
 
 next_month = 1 if month + 1 == 13 else month + 1
 year = year + 1 if next_month == 1 else year
+_, last_day = calendar.monthrange(year, month)
 
 ingestion_dag_monthly = _create_ingestion_dag(
     dag_id='monthly',
     schedule='@monthly',
-    start_date=datetime(year, next_month, 1),
+    start_date=datetime(year, next_month, last_day),
     catchup=False,
     year=year,
     month=next_month
