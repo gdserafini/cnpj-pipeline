@@ -14,7 +14,10 @@ import uuid
 from typing import Any
 import json
 import os
+import argparse
 
+
+BDIR = os.path.dirname(os.path.abspath(__file__))
 
 TYPE_MAP = {
     "string": pa.string(),
@@ -25,7 +28,8 @@ TYPE_MAP = {
 
 
 def build_url(file_name: str, year: int, month: int) -> str:
-    url = f'{Settings().BASE_URL}/{year}-{month:02d}/{file_name}.zip'
+    int_month = int(month)
+    url = f'{Settings().BASE_URL}/{year}-{int_month:02d}/{file_name}.zip'
     return url
 
 
@@ -79,8 +83,8 @@ def data_already_exists(
     if not os.path.exists(partition_path):
         return False
     
-    return (
-        any(fname.endswith('.parquet'))
+    return any(
+        fname.endswith('.parquet') 
         for fname in os.listdir(partition_path)
     )
 
@@ -155,21 +159,9 @@ def save_data(
 
                 del table
                 gc.collect()
-        
-
-def _get_current_year_month() -> tuple[int, int]:
-    today_date = date.today()
-    year = today_date.year
-    month = today_date.month
-    return year, month
 
 
-BDIR = os.path.dirname(os.path.abspath(__file__))
-
-
-def main() -> int:
-    year, month = _get_current_year_month()
-
+def main(year: int, month: int) -> int:
     total_start = time.time()
 
     logger.info('Starting ingestion service.')
@@ -222,4 +214,14 @@ def main() -> int:
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-y')
+    parser.add_argument('-m')
+    args = parser.parse_args()
+    
+    year = args.y
+    month = args.m
+
+    main(year, month)
+    
+    
